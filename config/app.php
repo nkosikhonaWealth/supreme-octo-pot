@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Insika_Yelikusasa_Lensha_Yeswatini'),
+    'name' => env('APP_NAME', 'Eswatini_National_Youth_Council_Youth_Development_Programme'),
 
     /*
     |--------------------------------------------------------------------------
