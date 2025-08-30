@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.1-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -10,61 +10,55 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     unzip \
-    nginx \
-    supervisor
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (MySQL instead of PostgreSQL)
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
-WORKDIR /var/www
+WORKDIR /var/www/html
 
-# Copy application files
+# Copy composer files first (for better Docker caching)
+COPY composer.json composer.lock ./
+
+# Install dependencies without dev packages
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+# Copy application code
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Generate autoloader and run post-install scripts
+RUN composer dump-autoload --optimize \
+    && php artisan config:clear \
+    && php artisan route:clear \
+    && php artisan view:clear \
+    && php artisan cache:clear
 
-# Create directories and set permissions
-RUN mkdir -p /var/www/storage/logs \
-    && mkdir -p /var/www/storage/framework/cache \
-    && mkdir -p /var/www/storage/framework/sessions \
-    && mkdir -p /var/www/storage/framework/views \
-    && chmod -R 775 /var/www/storage \
-    && chmod -R 775 /var/www/bootstrap/cache
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage \
+    && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Configure Nginx for port 8080
-RUN echo 'server { \
-    listen 8080; \
-    index index.php index.html; \
-    root /var/www/public; \
-    location ~ \.php$ { \
-        try_files $uri =404; \
-        fastcgi_split_path_info ^(.+\.php)(/.+)$; \
-        fastcgi_pass 127.0.0.1:9000; \
-        fastcgi_index index.php; \
-        include fastcgi_params; \
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
-        fastcgi_param PATH_INFO $fastcgi_path_info; \
-    } \
-    location / { \
-        try_files $uri $uri/ /index.php?$query_string; \
-    } \
-}' > /etc/nginx/sites-available/default
+# Configure Apache document root
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Configure Supervisor
-RUN echo '[supervisord] \
-nodaemon=true \
-[program:php-fpm] \
-command=php-fpm \
-autorestart=true \
-[program:nginx] \
-command=nginx -g "daemon off;" \
-autorestart=true' > /etc/supervisor/conf.d/supervisord.conf
+# Create .htaccess if it doesn't exist
+RUN echo 'RewriteEngine On\n\
+RewriteCond %{REQUEST_FILENAME} !-d\n\
+RewriteCond %{REQUEST_FILENAME} !-f\n\
+RewriteRule ^ index.php [L]' > /var/www/html/public/.htaccess
 
-EXPOSE 8080
+EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["apache2-foreground"]
