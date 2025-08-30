@@ -1,0 +1,1 @@
+[18-Feb-2025 04:22:11 UTC] PHP Fatal error:  Cannot use Illuminate\Support\Facades\Auth as Auth because the name is already in use in /home/bizghjcy/iyly.bizgrowsz.online/app/Filament/User/Pages/Dashboard.php on line 12

@@ -1,0 +1,30 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect all requests to the public folder, while keeping public folder URL in check
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ /public/$1 [L]
+
+    # Handle Authorization Header for API calls (if any)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Ensure Requests With Trailing Slashes Are Handled Correctly
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send all requests to the front controller (index.php)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ public/index.php [L]
+
+    # Block direct access to system folders
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor)/.* - [R=403,L]
+
+    # Deny access to .env file
+    <FilesMatch "^\.env">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>

@@ -1,0 +1,15 @@
+[17-Feb-2025 09:23:53 UTC] PHP Warning:  require(phpmailer/src/Exception.php): Failed to open stream: No such file or directory in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php on line 18
+[17-Feb-2025 09:23:53 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'phpmailer/src/Exception.php' (include_path='.:/opt/alt/php84/usr/share/pear:/opt/alt/php84/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php on line 18
+[17-Feb-2025 09:24:26 UTC] PHP Warning:  require(phpmailer/src/Exception.php): Failed to open stream: No such file or directory in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php on line 18
+[17-Feb-2025 09:24:26 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'phpmailer/src/Exception.php' (include_path='.:/opt/alt/php84/usr/share/pear:/opt/alt/php84/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php on line 18
+[17-Feb-2025 09:24:31 UTC] PHP Warning:  require(phpmailer/src/Exception.php): Failed to open stream: No such file or directory in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php on line 18
+[17-Feb-2025 09:24:31 UTC] PHP Fatal error:  Uncaught Error: Failed opening required 'phpmailer/src/Exception.php' (include_path='.:/opt/alt/php84/usr/share/pear:/opt/alt/php84/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php:18
+Stack trace:
+#0 {main}
+  thrown in /home/bizghjcy/iyly.bizgrowsz.online/public/assets/include/form.php on line 18
