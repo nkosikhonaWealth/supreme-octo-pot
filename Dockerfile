@@ -37,12 +37,20 @@ RUN composer dump-autoload --optimize --no-dev
 
 # Configure Apache Virtual Host for Laravel
 RUN echo '<VirtualHost *:80>\n\
+    ServerName localhost\n\
     DocumentRoot /var/www/html/public\n\
     \n\
-    <Directory /var/www/html/public>\n\
+    <Directory /var/www/html>\n\
+        Options Indexes FollowSymLinks\n\
         AllowOverride All\n\
         Require all granted\n\
+    </Directory>\n\
+    \n\
+    <Directory /var/www/html/public>\n\
         Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+        DirectoryIndex index.php\n\
         \n\
         RewriteEngine On\n\
         RewriteCond %{REQUEST_FILENAME} !-d\n\
@@ -52,6 +60,7 @@ RUN echo '<VirtualHost *:80>\n\
     \n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+    LogLevel warn\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Set proper permissions
@@ -73,6 +82,7 @@ echo "Setting permissions..."\n\
 chown -R www-data:www-data /var/www/html\n\
 chmod -R 755 /var/www/html/storage\n\
 chmod -R 755 /var/www/html/bootstrap/cache\n\
+chmod 644 /var/www/html/public/index.php\n\
 \n\
 # Test database connection\n\
 echo "Testing database connection..."\n\
@@ -90,21 +100,22 @@ php artisan route:cache --no-interaction || echo "Route cache failed"\n\
 php artisan view:cache --no-interaction || echo "View cache failed"\n\
 php artisan filament:optimize || echo "Filament optimize not available - continuing"\n\
 \n\
+# Test PHP in public directory\n\
+echo "Testing PHP execution..."\n\
+cd /var/www/html/public\n\
+php -l index.php\n\
+\n\
+# Enable Apache error logging\n\
+echo "Enabling Apache error logging..."\n\
+tail -f /var/log/apache2/error.log &\n\
+tail -f /var/log/apache2/access.log &\n\
+\n\
 echo "=== Starting Apache ==="\n\
 apache2-foreground\n\
 ' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
 
-# Startup script to inject Railway's $PORT into Apache config
-RUN echo '#!/bin/bash\n\
-set -e\n\
-# Replace Apache default port with Railway $PORT\n\
-sed -i "s/Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf\n\
-sed -i "s/<VirtualHost \\*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf\n\
-exec apache2-foreground\n' > /usr/local/bin/docker-start.sh \
-    && chmod +x /usr/local/bin/docker-start.sh
-
-# Expose Railway's dynamic port
-EXPOSE 8080
+# Expose port
+EXPOSE 80
 
 # Start with optimizations
 CMD ["/usr/local/bin/startup.sh"]
