@@ -26,14 +26,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files first for better caching
-COPY composer.json composer.lock ./
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
-# Copy application code
+# Copy all application code first
 COPY . .
+
+# Install PHP dependencies with no scripts initially
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
+
+# Now run the scripts that need artisan
+RUN composer dump-autoload --optimize --no-dev
 
 # Configure Apache Virtual Host for Laravel
 RUN echo '<VirtualHost *:80>\n\
