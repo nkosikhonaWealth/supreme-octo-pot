@@ -11,8 +11,10 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libzip-dev \
+    libicu-dev \
     default-mysql-client \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Enable Apache mod_rewrite
@@ -57,13 +59,26 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Laravel optimizations - run after environment is available
-RUN php artisan config:cache --no-interaction || true
-RUN php artisan route:cache --no-interaction || true
-RUN php artisan view:cache --no-interaction || true
+# Create startup script for Laravel optimizations
+RUN echo '#!/bin/bash\n\
+# Wait for database connection\n\
+until php artisan migrate:status > /dev/null 2>&1; do\n\
+    echo "Waiting for database connection..."\n\
+    sleep 2\n\
+done\n\
+\n\
+# Run Laravel optimizations\n\
+php artisan config:cache --no-interaction\n\
+php artisan route:cache --no-interaction\n\
+php artisan view:cache --no-interaction\n\
+php artisan filament:optimize || true\n\
+\n\
+# Start Apache\n\
+apache2-foreground\n\
+' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
 
 # Expose port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start with optimizations
+CMD ["/usr/local/bin/startup.sh"]
