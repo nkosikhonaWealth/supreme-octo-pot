@@ -115,7 +115,7 @@ apache2-foreground\n\
 ' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
 
 # Expose port
-EXPOSE 80
+EXPOSE 8080
 
 # Start with optimizations
 CMD ["/usr/local/bin/startup.sh"]
