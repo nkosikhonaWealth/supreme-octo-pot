@@ -110,12 +110,25 @@ echo "Enabling Apache error logging..."\n\
 tail -f /var/log/apache2/error.log &\n\
 tail -f /var/log/apache2/access.log &\n\
 \n\
+echo "Configuring Apache for port ${PORT:-80}"
+sed -i "s/\*:80/\*:${PORT:-80}/g" /etc/apache2/sites-available/000-default.conf
 echo "=== Starting Apache ==="\n\
 apache2-foreground\n\
 ' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
 
-# Expose port
-EXPOSE 8080
+RUN echo '<VirtualHost *:${PORT:-80}>\n\
+    DocumentRoot /var/www/html/public\n\
+    ServerName localhost\n\
+    \n\
+    <Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+        DirectoryIndex index.php index.html\n\
+    </Directory>\n\
+    \n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Start with optimizations
 CMD ["/usr/local/bin/startup.sh"]
