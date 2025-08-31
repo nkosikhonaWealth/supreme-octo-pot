@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y \
 
 # Enable Apache modules
 RUN a2enmod rewrite
-RUN a2enmod php8.2
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
