@@ -1,5 +1,4 @@
 # Improved Railway Dockerfile based on working commit ca0ccc0
-
 FROM php:8.2-apache
 
 # Install system dependencies
@@ -12,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libzip-dev \
-    mysql-client \
+    default-mysql-client \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -58,7 +57,7 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Laravel optimizations
+# Laravel optimizations - run after environment is available
 RUN php artisan config:cache --no-interaction || true
 RUN php artisan route:cache --no-interaction || true
 RUN php artisan view:cache --no-interaction || true
