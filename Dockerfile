@@ -61,19 +61,36 @@ RUN chown -R www-data:www-data /var/www/html \
 
 # Create startup script for Laravel optimizations
 RUN echo '#!/bin/bash\n\
-# Wait for database connection\n\
-until php artisan migrate:status > /dev/null 2>&1; do\n\
-    echo "Waiting for database connection..."\n\
-    sleep 2\n\
-done\n\
+echo "=== Starting Laravel application ==="\n\
+\n\
+# Check critical files\n\
+echo "Checking application files..."\n\
+ls -la /var/www/html/artisan\n\
+ls -la /var/www/html/public/index.php\n\
+\n\
+# Set permissions again (critical for Railway)\n\
+echo "Setting permissions..."\n\
+chown -R www-data:www-data /var/www/html\n\
+chmod -R 755 /var/www/html/storage\n\
+chmod -R 755 /var/www/html/bootstrap/cache\n\
+\n\
+# Test database connection\n\
+echo "Testing database connection..."\n\
+timeout 10 php artisan migrate:status || echo "Database connection failed - continuing anyway"\n\
+\n\
+# Generate storage link if needed\n\
+echo "Creating storage link..."\n\
+php artisan storage:link --no-interaction || echo "Storage link failed - continuing"\n\
 \n\
 # Run Laravel optimizations\n\
-php artisan config:cache --no-interaction\n\
-php artisan route:cache --no-interaction\n\
-php artisan view:cache --no-interaction\n\
-php artisan filament:optimize || true\n\
+echo "Running Laravel optimizations..."\n\
+php artisan config:clear --no-interaction || echo "Config clear failed"\n\
+php artisan config:cache --no-interaction || echo "Config cache failed"\n\
+php artisan route:cache --no-interaction || echo "Route cache failed"\n\
+php artisan view:cache --no-interaction || echo "View cache failed"\n\
+php artisan filament:optimize || echo "Filament optimize not available - continuing"\n\
 \n\
-# Start Apache\n\
+echo "=== Starting Apache ==="\n\
 apache2-foreground\n\
 ' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
 
