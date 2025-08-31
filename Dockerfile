@@ -94,13 +94,17 @@ echo "=== Starting Apache ==="\n\
 apache2-foreground\n\
 ' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
 
-# Configure Apache to listen on Railway's assigned PORT
-# Railway sets $PORT automatically
-RUN echo "Listen ${PORT}" >> /etc/apache2/ports.conf \
-    && sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf
+# Startup script to inject Railway's $PORT into Apache config
+RUN echo '#!/bin/bash\n\
+set -e\n\
+# Replace Apache default port with Railway $PORT\n\
+sed -i "s/Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf\n\
+sed -i "s/<VirtualHost \\*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-available/000-default.conf\n\
+exec apache2-foreground\n' > /usr/local/bin/docker-start.sh \
+    && chmod +x /usr/local/bin/docker-start.sh
 
-# Expose Railway's port
-EXPOSE ${PORT}
+# Expose Railway's dynamic port
+EXPOSE 8080
 
 # Start with optimizations
 CMD ["/usr/local/bin/startup.sh"]
