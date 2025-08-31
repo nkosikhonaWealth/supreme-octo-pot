@@ -110,8 +110,42 @@ echo "Enabling Apache error logging..."\n\
 tail -f /var/log/apache2/error.log &\n\
 tail -f /var/log/apache2/access.log &\n\
 \n\
-echo "Configuring Apache for port ${PORT:-80}"
-sed -i "s/\*:80/\*:${PORT:-80}/g" /etc/apache2/sites-available/000-default.conf
+# Create startup script with basic testing
+RUN echo '#!/bin/bash\n\
+echo "=== Railway Laravel Startup ==="\n\
+\n\
+# Test PHP\n\
+echo "PHP Version:"\n\
+php -v\n\
+\n\
+# Check if index.php exists and is readable\n\
+echo "Checking Laravel files:"\n\
+ls -la /var/www/html/public/index.php\n\
+ls -la /var/www/html/public/test.php\n\
+\n\
+# Test PHP syntax\n\
+echo "Testing PHP syntax:"\n\
+php -l /var/www/html/public/index.php\n\
+php -l /var/www/html/public/test.php\n\
+\n\
+# Set permissions\n\
+chown -R www-data:www-data /var/www/html\n\
+chmod -R 755 /var/www/html/storage\n\
+chmod -R 755 /var/www/html/bootstrap/cache\n\
+\n\
+# Configure Apache for dynamic port\n\
+echo "Configuring Apache for port ${PORT:-80}"\n\
+sed -i "s/\\*:80/\\*:${PORT:-80}/g" /etc/apache2/sites-available/000-default.conf\n\
+\n\
+# Quick Laravel setup\n\
+echo "Laravel optimizations:"\n\
+timeout 5 php artisan config:cache || echo "Skipping config cache"\n\
+timeout 5 php artisan route:cache || echo "Skipping route cache"\n\
+timeout 5 php artisan view:cache || echo "Skipping view cache"\n\
+\n\
+echo "Starting Apache..."\n\
+apache2-foreground\n\
+' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
 echo "=== Starting Apache ==="\n\
 apache2-foreground\n\
 ' > /usr/local/bin/startup.sh && chmod +x /usr/local/bin/startup.sh
