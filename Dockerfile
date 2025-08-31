@@ -65,9 +65,16 @@ echo "=== Railway Laravel Startup ==="\n\
 echo "PHP Version:"\n\
 php -v\n\
 \n\
+echo "Environment Variables:"\n\
+echo "APP_KEY: ${APP_KEY:0:20}..."\n\
+echo "APP_ENV: $APP_ENV"\n\
+echo "DB_HOST: $DB_HOST"\n\
+echo "PORT: ${PORT:-80}"\n\
+\n\
 echo "Checking Laravel files:"\n\
 ls -la /var/www/html/public/index.php\n\
 ls -la /var/www/html/public/test.php\n\
+ls -la /var/www/html/.env 2>/dev/null || echo "No .env file (using Railway vars)"\n\
 \n\
 echo "Testing PHP syntax:"\n\
 php -l /var/www/html/public/index.php\n\
@@ -80,10 +87,24 @@ chmod -R 755 /var/www/html/bootstrap/cache\n\
 echo "Configuring Apache for port ${PORT:-80}"\n\
 sed -i "s/*:80/*:${PORT:-80}/g" /etc/apache2/sites-available/000-default.conf\n\
 \n\
+echo "Testing Laravel bootstrap:"\n\
+cd /var/www/html\n\
+timeout 10 php artisan --version || echo "Artisan failed"\n\
+\n\
 echo "Laravel optimizations:"\n\
-timeout 5 php artisan config:cache || echo "Skipping config cache"\n\
-timeout 5 php artisan route:cache || echo "Skipping route cache"\n\
-timeout 5 php artisan view:cache || echo "Skipping view cache"\n\
+php artisan config:clear || echo "Config clear failed"\n\
+timeout 5 php artisan config:cache || echo "Config cache failed"\n\
+timeout 5 php artisan route:clear || echo "Route clear failed"\n\
+timeout 5 php artisan route:cache || echo "Route cache failed"\n\
+timeout 5 php artisan view:clear || echo "View clear failed"\n\
+timeout 5 php artisan view:cache || echo "View cache failed"\n\
+\n\
+echo "Testing direct PHP execution:"\n\
+cd /var/www/html/public\n\
+php -r "echo \"Direct PHP works\\n\";"\n\
+\n\
+echo "Apache configuration:"\n\
+cat /etc/apache2/sites-available/000-default.conf\n\
 \n\
 echo "Starting Apache on port ${PORT:-80}..."\n\
 apache2-foreground\n\
