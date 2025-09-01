@@ -11,5 +11,5 @@ cmds = [
   "npm run build"
 ]
 
-[phases.start]
+[start]
 cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
