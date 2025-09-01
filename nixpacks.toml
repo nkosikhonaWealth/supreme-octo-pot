@@ -18,6 +18,7 @@ cmds = [
   "php artisan config:clear",
   "php artisan route:clear",
   "php artisan view:clear",
+  "php artisan filament:optimize",
   "npm install --force",
   "npm run build"
 ]
