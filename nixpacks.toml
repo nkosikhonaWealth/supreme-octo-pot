@@ -1,5 +1,17 @@
 [phases.setup]
-nixPkgs = ["php82", "php82Extensions.pdo_mysql", "php82Extensions.redis", "php82Extensions.mbstring", "php82Extensions.exif", "php82Extensions.fileinfo", "php82Extensions.bcmath", "php82Extensions.gd", "php82Extensions.openssl", "composer", "nodejs_20"]
+nixPkgs = [
+  "php82",
+  "php82Packages.composer",
+  "php82Extensions.bcmath",
+  "php82Extensions.exif",
+  "php82Extensions.fileinfo",
+  "php82Extensions.gd",
+  "php82Extensions.mbstring",
+  "php82Extensions.openssl",
+  "php82Extensions.pdo_mysql",
+  "php82Extensions.redis",
+  "nodejs_20"
+]
 
 [phases.build]
 cmds = [
